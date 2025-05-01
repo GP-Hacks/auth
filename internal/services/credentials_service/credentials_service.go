@@ -9,7 +9,6 @@ import (
 type (
 	ICredentialsRepository interface {
 		GetById(ctx context.Context, id int64) (*models.Credentials, error)
-		GetCountByEmail(ctx context.Context, email string) (int64, error)
 		Create(ctx context.Context, m *models.Credentials) (int64, error)
 		GetByEmail(ctx context.Context, email string) (*models.Credentials, error)
 	}
@@ -19,7 +18,6 @@ type (
 		Create(ctx context.Context, m *models.Token) (int64, error)
 		Update(ctx context.Context, m *models.Token) error
 		Delete(ctx context.Context, id int64) error
-		GetCountById(ctx context.Context, id int64) (int64, error)
 		GetByJTI(ctx context.Context, jti string) (*models.Token, error)
 	}
 )
