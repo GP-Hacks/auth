@@ -4,13 +4,15 @@ import (
 	"context"
 
 	"github.com/GP-Hacks/auth/internal/services"
+	"github.com/rs/zerolog/log"
 )
 
 func (r *TokensRepository) RevokeByJTI(ctx context.Context, jti string) error {
-	query := `UPDATE $1 SET revoked = true WHERE jti = $2`
+	query := `UPDATE issued_jwt_token SET revoked = true WHERE jti = $1`
 
-	_, err := r.pool.Exec(ctx, query, r.tableName, jti)
+	_, err := r.pool.Exec(ctx, query, jti)
 	if err != nil {
+		log.Error().Msg(err.Error())
 		return services.InternalServer
 	}
 
@@ -18,10 +20,11 @@ func (r *TokensRepository) RevokeByJTI(ctx context.Context, jti string) error {
 }
 
 func (r *TokensRepository) RevokeAllWithSubjectId(ctx context.Context, subId int64) error {
-	query := `UPDATE $1 SET revoked = true WHERE subject_id = $2`
+	query := `UPDATE issued_jwt_token SET revoked = true WHERE subject_id = $1`
 
-	_, err := r.pool.Exec(ctx, query, r.tableName, subId)
+	_, err := r.pool.Exec(ctx, query, subId)
 	if err != nil {
+		log.Error().Msg(err.Error())
 		return services.InternalServer
 	}
 

@@ -6,13 +6,14 @@ import (
 	"github.com/GP-Hacks/auth/internal/models"
 	"github.com/GP-Hacks/auth/internal/services"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/rs/zerolog/log"
 )
 
 func (cr *CredentialsRepository) Create(ctx context.Context, m *models.Credentials) (int64, error) {
-	query := `INSERT INTO $1 (email, password) VALUES ($2, $3) RETURNING id`
+	query := `INSERT INTO credentials (email, password) VALUES ($1, $2) RETURNING id`
 
 	var id int64
-	err := cr.pool.QueryRow(ctx, query, cr.tableName, m.Email, m.Password).Scan(&id)
+	err := cr.pool.QueryRow(ctx, query, m.Email, m.Password).Scan(&id)
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "23505" {
@@ -20,6 +21,7 @@ func (cr *CredentialsRepository) Create(ctx context.Context, m *models.Credentia
 			}
 		}
 
+		log.Error().Msg(err.Error())
 		return -1, services.InternalServer
 	}
 

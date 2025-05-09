@@ -7,13 +7,14 @@ import (
 	"github.com/GP-Hacks/auth/internal/models"
 	"github.com/GP-Hacks/auth/internal/services"
 	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog/log"
 )
 
-func (tr *TokensRepository) GetByID(ctx context.Context, id int64) (*models.Token, error) {
-	query := `SELECT id, jti, subject_id, type, revoked, issued_at, expires_at FROM $1 WHERE id = $2`
+func (tr *TokensRepository) GetById(ctx context.Context, id int64) (*models.Token, error) {
+	query := `SELECT id, jti, subject_id, token_type, revoked, issued_at, expires_at FROM issued_jwt_token WHERE id = $1`
 
 	var token models.Token
-	err := tr.pool.QueryRow(ctx, query, tr.tableName, id).Scan(
+	err := tr.pool.QueryRow(ctx, query, id).Scan(
 		&token.ID,
 		&token.JTI,
 		&token.SubjectID,
@@ -27,6 +28,7 @@ func (tr *TokensRepository) GetByID(ctx context.Context, id int64) (*models.Toke
 			return nil, services.NotFound
 		}
 
+		log.Error().Msg(err.Error())
 		return nil, services.InternalServer
 	}
 
@@ -34,10 +36,10 @@ func (tr *TokensRepository) GetByID(ctx context.Context, id int64) (*models.Toke
 }
 
 func (tr *TokensRepository) GetByJTI(ctx context.Context, jti string) (*models.Token, error) {
-	query := `SELECT id, jti, subject_id, type, revoked, issued_at, expires_at FROM $1 WHERE jti = $2`
+	query := `SELECT id, jti, subject_id, token_type, revoked, issued_at, expires_at FROM issued_jwt_token WHERE jti = $1`
 
 	var token models.Token
-	err := tr.pool.QueryRow(ctx, query, tr.tableName, jti).Scan(
+	err := tr.pool.QueryRow(ctx, query, jti).Scan(
 		&token.ID,
 		&token.JTI,
 		&token.SubjectID,
@@ -51,6 +53,7 @@ func (tr *TokensRepository) GetByJTI(ctx context.Context, jti string) (*models.T
 			return nil, services.NotFound
 		}
 
+		log.Error().Msg(err.Error())
 		return nil, services.InternalServer
 	}
 

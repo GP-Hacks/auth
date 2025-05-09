@@ -5,21 +5,21 @@ import (
 
 	"github.com/GP-Hacks/auth/internal/models"
 	"github.com/GP-Hacks/auth/internal/services"
+	"github.com/rs/zerolog/log"
 )
 
 func (tr *TokensRepository) Update(ctx context.Context, m *models.Token) error {
-	query := `UPDATE $1 SET
-		jti = $2,
-		subject_id = $3,
-		type = $4,
-		revoked = $5,
-		issued_at = $6,
-		expires_at = $7
-		WHERE id = $8
+	query := `UPDATE issued_jwt_token SET
+		jti = $1,
+		subject_id = $2,
+		token_type = $3,
+		revoked = $4,
+		issued_at = $5,
+		expires_at = $6
+		WHERE id = $7
 	`
 
 	_, err := tr.pool.Exec(ctx, query,
-		tr.tableName,
 		m.JTI,
 		m.SubjectID,
 		m.Type,
@@ -29,6 +29,7 @@ func (tr *TokensRepository) Update(ctx context.Context, m *models.Token) error {
 		m.ID,
 	)
 	if err != nil {
+		log.Error().Msg(err.Error())
 		return services.InternalServer
 	}
 	return nil
