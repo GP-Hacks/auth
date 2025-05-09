@@ -13,6 +13,12 @@ type AuthController struct {
 	credentialsService *credentials_service.CredentialsService
 }
 
+func NewAuthController(cs *credentials_service.CredentialsService) *AuthController {
+	return &AuthController{
+		credentialsService: cs,
+	}
+}
+
 func (c *AuthController) SignUp(ctx context.Context, req *auth.SignUpRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, c.credentialsService.SignUp(ctx, req.Credentials.Email, req.Credentials.Password)
 }
