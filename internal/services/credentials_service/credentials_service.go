@@ -19,5 +19,19 @@ type (
 		Update(ctx context.Context, m *models.Token) error
 		Delete(ctx context.Context, id int64) error
 		GetByJTI(ctx context.Context, jti string) (*models.Token, error)
+		RevokeAllWithSubjectId(ctx context.Context, subId int64) error
+		RevokeByJTI(ctx context.Context, jti string) error
+	}
+
+	CredentialsService struct {
+		credentialsRepository ICredentialsRepository
+		tokensRepository      ITokensRepository
 	}
 )
+
+func NewCredentialsService(cr ICredentialsRepository, tr ITokensRepository) *CredentialsService {
+	return &CredentialsService{
+		credentialsRepository: cr,
+		tokensRepository:      tr,
+	}
+}

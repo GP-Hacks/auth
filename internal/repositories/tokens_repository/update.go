@@ -15,6 +15,7 @@ func (tr *TokensRepository) Update(ctx context.Context, m *models.Token) error {
 		revoked = $5,
 		issued_at = $6,
 		expires_at = $7
+		WHERE id = $8
 	`
 
 	_, err := tr.pool.Exec(ctx, query,
@@ -25,6 +26,7 @@ func (tr *TokensRepository) Update(ctx context.Context, m *models.Token) error {
 		m.Revoked,
 		m.IssuedAt,
 		m.ExpiresAt,
+		m.ID,
 	)
 	if err != nil {
 		return services.InternalServer
