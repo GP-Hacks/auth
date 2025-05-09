@@ -1,0 +1,12 @@
+grpc:
+  port: "8080"
+
+# postgres:
+#   user: ""
+#   name: ""
+#   password: ""
+#   address: ""
+
+logging:
+  isProduction: true
+  vectorURL: "http://vector:9880"
