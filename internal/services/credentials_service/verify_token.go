@@ -6,6 +6,7 @@ import (
 	"github.com/GP-Hacks/auth/internal/models"
 	"github.com/GP-Hacks/auth/internal/services"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog/log"
 )
 
 func (s *CredentialsService) verify_token(ctx context.Context, tokenString string, expectedType models.TokenType) (int64, string, error) {
@@ -19,27 +20,37 @@ func (s *CredentialsService) verify_token(ctx context.Context, tokenString strin
 	}
 
 	if !token.Valid {
+		log.Debug().Msg("Token is not valid")
 		return -1, "", services.InvalidToken
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		typeToken, ok := claims["type"].(models.TokenType)
+		for key := range claims {
+			log.Debug().Msg(key)
+		}
+		typeFloat, ok := claims["type"].(float64)
 		if !ok {
+			log.Debug().Msg("Token is not type")
 			return -1, "", services.InvalidToken
 		}
+		typeToken := models.TokenType(int(typeFloat))
 		if typeToken != expectedType {
+			log.Debug().Msg("Token is type not expected")
 			return -1, "", services.InvalidToken
 		}
 
 		jti, ok := claims["jti"].(string)
 		if !ok {
+			log.Debug().Msg("Token is not jti")
 			return -1, "", services.InvalidToken
 		}
 
-		subId, ok := claims["id"].(int64)
+		subIdF, ok := claims["id"].(float64)
 		if !ok {
+			log.Debug().Msg("Token is not subId")
 			return -1, "", services.InvalidToken
 		}
+		subId := int64(subIdF)
 
 		t, err := s.tokensRepository.GetByJTI(ctx, jti)
 		if err != nil {

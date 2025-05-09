@@ -6,6 +6,7 @@ import (
 	"github.com/GP-Hacks/auth/internal/models"
 	"github.com/GP-Hacks/auth/internal/services"
 	"github.com/GP-Hacks/auth/internal/utils/hasher"
+	"github.com/rs/zerolog/log"
 )
 
 func (s *CredentialsService) SignUp(ctx context.Context, email, password string) error {
@@ -13,6 +14,7 @@ func (s *CredentialsService) SignUp(ctx context.Context, email, password string)
 
 	hash, err := hasher.HashPassword(password)
 	if err != nil {
+		log.Error().Msg(err.Error())
 		return services.InternalServer
 	}
 
