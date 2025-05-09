@@ -4,22 +4,12 @@ import (
 	"context"
 
 	"github.com/GP-Hacks/auth/internal/models"
-	"github.com/GP-Hacks/auth/internal/services"
 )
 
-func (s *CredentialsService) RefreshTokens(ctx context.Context, access, refresh string) (string, string, error) {
-	idFromAccess, _, err := s.verify_token(ctx, access, models.Access)
-	if err != nil {
-		return "", "", err
-	}
-
+func (s *CredentialsService) RefreshTokens(ctx context.Context, refresh string) (string, string, error) {
 	idFromRefresh, _, err := s.verify_token(ctx, refresh, models.Refresh)
 	if err != nil {
 		return "", "", err
-	}
-
-	if idFromAccess != idFromRefresh {
-		return "", "", services.InvalidToken
 	}
 
 	if err := s.tokensRepository.RevokeAllWithSubjectId(ctx, idFromRefresh); err != nil {
