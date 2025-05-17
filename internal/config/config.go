@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -10,7 +11,8 @@ import (
 
 type Config struct {
 	Grpc struct {
-		Port string `mapstructure:"port"`
+		Port                string `mapstructure:"port"`
+		UsersServiceAddress string `mapstructure:"users_service_address"`
 	} `mapstructure:"grpc"`
 
 	Logging struct {
@@ -24,6 +26,18 @@ type Config struct {
 		Password string `mapstructure:"password"`
 		Address  string `mapstructure:"address"`
 	} `mapstructure:"postgres"`
+
+	RabbitMQ struct {
+		Address    string `mapstructure:"address"`
+		EmailQueue string `mapstructure:"email_queue"`
+	} `mapstructure:"rabbitmq"`
+
+	Redis struct {
+		TokensTTL time.Duration `mapstructure:"tokens_ttl"`
+		Address   string        `mapstructure:"address"`
+		Password  string        `mapstructure:"password"`
+		DB        int           `mapstructure:"db"`
+	} `mapstructure:"redis"`
 }
 
 var Cfg Config
@@ -82,6 +96,10 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("logging.isProduction", false)
 	v.SetDefault("logging.vectorURL", "http://vector:9880")
+
+	v.SetDefault("rabbitmq.address", "amqp://guest:guest@localhost:5672/")
+	v.SetDefault("rabbitmq.notifications_queue", "tasks")
+	v.SetDefault("rabbitmq.email_queue", "tasks")
 }
 
 func validateConfig(cfg *Config) error {

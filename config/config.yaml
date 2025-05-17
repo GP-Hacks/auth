@@ -1,5 +1,16 @@
 grpc:
   port: "8080"
+  users_service_address: "users-service:8080"
+
+rabbitmq:
+  notifications_queue: "notifications"
+  email_queue: "email"
+
+redis:
+  tokens_ttl: "10m"
+  address: "redis:6379"
+  password: ${APP_REDIS_PASSWORD}
+  db: 0
 
 # postgres:
 #   user: ""
