@@ -8,4 +8,5 @@ var (
 	AlreadyExists      = errors.New("Already exists")
 	InvalidCredentials = errors.New("Invalid credentials")
 	InvalidToken       = errors.New("Invalid token")
+	NotVerification    = errors.New("Not verification")
 )
