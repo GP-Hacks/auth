@@ -17,6 +17,10 @@ func (s *CredentialsService) SignIn(ctx context.Context, email, password string)
 		return "", "", err
 	}
 
+	if !cred.IsVerification {
+		return "", "", services.NotVerification
+	}
+
 	if !hasher.ValidatePassword(password, cred.Password) {
 		return "", "", services.InvalidCredentials
 	}

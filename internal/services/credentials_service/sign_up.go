@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (s *CredentialsService) SignUp(ctx context.Context, email, password string) error {
+func (s *CredentialsService) SignUp(ctx context.Context, email, password string, u *models.User) error {
 	// TODO: Add validate password
 
 	hash, err := hasher.HashPassword(password)
@@ -19,13 +19,24 @@ func (s *CredentialsService) SignUp(ctx context.Context, email, password string)
 	}
 
 	cred := models.Credentials{
-		Email:    email,
-		Password: hash,
+		Email:          email,
+		Password:       hash,
+		IsVerification: false,
 	}
 
-	if _, err := s.credentialsRepository.Create(ctx, &cred); err != nil {
-		return err
-	}
+	return s.txManager.Do(ctx, func(txCtx context.Context) error {
+		id, err := s.credentialsRepository.Create(txCtx, &cred)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		u.ID = id
+		if err := s.userAdaper.Create(ctx, u); err != nil {
+			return err
+		}
+
+		go s.sendConfirmationEmail(u)
+
+		return nil
+	})
 }
