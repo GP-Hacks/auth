@@ -3,8 +3,12 @@ package auth_controller
 import (
 	"context"
 
+	"github.com/GP-Hacks/auth/internal/models"
 	"github.com/GP-Hacks/auth/internal/services/credentials_service"
 	"github.com/GP-Hacks/proto/pkg/api/auth"
+	"github.com/GP-Hacks/proto/pkg/api/user"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -20,7 +24,23 @@ func NewAuthController(cs *credentials_service.CredentialsService) *AuthControll
 }
 
 func (c *AuthController) SignUp(ctx context.Context, req *auth.SignUpRequest) (*emptypb.Empty, error) {
-	return &emptypb.Empty{}, c.credentialsService.SignUp(ctx, req.Credentials.Email, req.Credentials.Password)
+	var st models.UserStatus
+	if req.User.Status == user.UserStatus_ADMIN {
+		st = models.AdminUser
+	} else if req.User.Status == user.UserStatus_DEFAULT {
+		st = models.DefaultUser
+	} else {
+		return &emptypb.Empty{}, status.Errorf(codes.InvalidArgument, "invalid user status")
+	}
+	u := models.User{
+		Email:       req.User.Email,
+		FirstName:   req.User.FirstName,
+		LastName:    req.User.LastName,
+		Surname:     req.User.Surname,
+		DateOfBirth: req.User.DateOfBirth.AsTime(),
+		Status:      st,
+	}
+	return &emptypb.Empty{}, c.credentialsService.SignUp(ctx, req.Credentials.Email, req.Credentials.Password, &u)
 }
 
 func (c *AuthController) SignIn(ctx context.Context, req *auth.SignInRequest) (*auth.SignInResponse, error) {
