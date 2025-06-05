@@ -2,12 +2,12 @@ package credentials_repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/GP-Hacks/auth/internal/models"
-	"github.com/GP-Hacks/auth/internal/services"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 	"github.com/GP-Hacks/auth/internal/utils/transaction"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/rs/zerolog/log"
 )
 
 func (cr *CredentialsRepository) Create(ctx context.Context, m *models.Credentials) (int64, error) {
@@ -23,12 +23,11 @@ func (cr *CredentialsRepository) Create(ctx context.Context, m *models.Credentia
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "23505" {
-				return -1, services.AlreadyExists
+				return -1, errs.SomeError
 			}
 		}
 
-		log.Error().Msg(err.Error())
-		return -1, services.InternalServer
+		return -1, errors.Join(errs.SomeError, err)
 	}
 
 	return id, nil
