@@ -9,7 +9,6 @@ on:
 env:
   YC_REGISTRY: cr.yandex
   IMAGE_NAME: kdt-auth-service
-  YC_REGISTRY_ID: crp3carpka15p99plk5n 
 
 jobs:
   build-and-deploy:
