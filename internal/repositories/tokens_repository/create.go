@@ -2,11 +2,11 @@ package tokens_repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/GP-Hacks/auth/internal/models"
-	"github.com/GP-Hacks/auth/internal/services"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/rs/zerolog/log"
 )
 
 func (tr *TokensRepository) Create(ctx context.Context, m *models.Token) (int64, error) {
@@ -17,12 +17,11 @@ func (tr *TokensRepository) Create(ctx context.Context, m *models.Token) (int64,
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "23505" {
-				return -1, services.AlreadyExists
+				return -1, errs.AlreadyExistsError
 			}
 		}
 
-		log.Error().Msg(err.Error())
-		return -1, services.InternalServer
+		return -1, errors.Join(errs.SomeError, err)
 	}
 
 	return id, nil

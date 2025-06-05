@@ -5,9 +5,8 @@ import (
 	"errors"
 
 	"github.com/GP-Hacks/auth/internal/models"
-	"github.com/GP-Hacks/auth/internal/services"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 	"github.com/jackc/pgx/v5"
-	"github.com/rs/zerolog/log"
 )
 
 func (tr *TokensRepository) GetById(ctx context.Context, id int64) (*models.Token, error) {
@@ -25,11 +24,10 @@ func (tr *TokensRepository) GetById(ctx context.Context, id int64) (*models.Toke
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, services.NotFound
+			return nil, errs.NotFoundError
 		}
 
-		log.Error().Msg(err.Error())
-		return nil, services.InternalServer
+		return nil, errors.Join(errs.SomeError, err)
 	}
 
 	return &token, nil
@@ -50,11 +48,10 @@ func (tr *TokensRepository) GetByJTI(ctx context.Context, jti string) (*models.T
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, services.NotFound
+			return nil, errs.NotFoundError
 		}
 
-		log.Error().Msg(err.Error())
-		return nil, services.InternalServer
+		return nil, errors.Join(errs.SomeError, err)
 	}
 
 	return &token, nil

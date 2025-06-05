@@ -2,9 +2,9 @@ package tokens_repository
 
 import (
 	"context"
+	"errors"
 
-	"github.com/GP-Hacks/auth/internal/services"
-	"github.com/rs/zerolog/log"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 )
 
 func (tr *TokensRepository) Delete(ctx context.Context, id int64) error {
@@ -12,8 +12,7 @@ func (tr *TokensRepository) Delete(ctx context.Context, id int64) error {
 		"DELETE FROM  issued_jwt_token WHERE id = $1", id)
 
 	if err != nil {
-		log.Error().Msg(err.Error())
-		return services.InternalServer
+		return errors.Join(errs.SomeError, err)
 	}
 
 	return nil

@@ -2,9 +2,9 @@ package tokens_repository
 
 import (
 	"context"
+	"errors"
 
-	"github.com/GP-Hacks/auth/internal/services"
-	"github.com/rs/zerolog/log"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 )
 
 func (r *TokensRepository) RevokeByJTI(ctx context.Context, jti string) error {
@@ -12,8 +12,7 @@ func (r *TokensRepository) RevokeByJTI(ctx context.Context, jti string) error {
 
 	_, err := r.pool.Exec(ctx, query, jti)
 	if err != nil {
-		log.Error().Msg(err.Error())
-		return services.InternalServer
+		return errors.Join(errs.SomeError, err)
 	}
 
 	return nil
@@ -24,8 +23,7 @@ func (r *TokensRepository) RevokeAllWithSubjectId(ctx context.Context, subId int
 
 	_, err := r.pool.Exec(ctx, query, subId)
 	if err != nil {
-		log.Error().Msg(err.Error())
-		return services.InternalServer
+		return errors.Join(errs.SomeError, err)
 	}
 
 	return nil

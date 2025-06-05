@@ -2,10 +2,10 @@ package tokens_repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/GP-Hacks/auth/internal/models"
-	"github.com/GP-Hacks/auth/internal/services"
-	"github.com/rs/zerolog/log"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 )
 
 func (tr *TokensRepository) Update(ctx context.Context, m *models.Token) error {
@@ -29,8 +29,7 @@ func (tr *TokensRepository) Update(ctx context.Context, m *models.Token) error {
 		m.ID,
 	)
 	if err != nil {
-		log.Error().Msg(err.Error())
-		return services.InternalServer
+		return errors.Join(errs.SomeError, err)
 	}
 	return nil
 
