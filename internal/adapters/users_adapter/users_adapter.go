@@ -5,7 +5,7 @@ import (
 )
 
 type UsersAdapter struct {
-	desc.UserServiceClient
+	// desc.UserServiceClient
 	client desc.UserServiceClient
 }
 

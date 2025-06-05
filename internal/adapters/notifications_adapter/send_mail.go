@@ -2,20 +2,18 @@ package notifications_adapter
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/GP-Hacks/auth/internal/config"
 	"github.com/GP-Hacks/auth/internal/models"
-	"github.com/GP-Hacks/auth/internal/services"
+	"github.com/GP-Hacks/auth/internal/utils/errs"
 	"github.com/rabbitmq/amqp091-go"
-	"github.com/rs/zerolog/log"
 )
 
 func (a *NotificationsAdapter) SendMail(m *models.Mail) error {
 	bodyBytes, err := json.Marshal(m)
 	if err != nil {
-		log.Error().Msg(err.Error())
-
-		return services.InternalServer
+		return errors.Join(errs.SomeError, err)
 	}
 
 	err = a.ch.Publish(
@@ -29,9 +27,7 @@ func (a *NotificationsAdapter) SendMail(m *models.Mail) error {
 		},
 	)
 	if err != nil {
-		log.Error().Msg(err.Error())
-
-		return services.InternalServer
+		return errors.Join(errs.SomeError, err)
 	}
 
 	return nil
