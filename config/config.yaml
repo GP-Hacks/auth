@@ -12,12 +12,12 @@ redis:
   password: ${APP_REDIS_PASSWORD}
   db: 0
 
-# postgres:
-#   user: ""
-#   name: ""
-#   password: ""
-#   address: ""
+postgres:
+  user: ${APP_POSTGRES_USER}
+  name: ${APP_POSTGRES_NAME}
+  password: {$APP_POSTGRES_PASSWORD}
+  address: {$APP_POSTGRES_ADDRESS}
 
 logging:
-  isProduction: true
+  isProduction: {$APP_LOGGING_IS_PRODUCTION}
   vectorURL: "http://vector:9880"
