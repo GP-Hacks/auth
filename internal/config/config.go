@@ -38,6 +38,10 @@ type Config struct {
 		Password  string        `mapstructure:"password"`
 		DB        int           `mapstructure:"db"`
 	} `mapstructure:"redis"`
+
+	JWT struct {
+		SecretKey string `mapstructure:"secret_key"`
+	} `mapstructure:"jwt"`
 }
 
 var Cfg Config
@@ -100,6 +104,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rabbitmq.address", "amqp://guest:guest@localhost:5672/")
 	v.SetDefault("rabbitmq.notifications_queue", "tasks")
 	v.SetDefault("rabbitmq.email_queue", "tasks")
+
+	v.SetDefault("jwt.secret_key", "secret_key")
 }
 
 func validateConfig(cfg *Config) error {
