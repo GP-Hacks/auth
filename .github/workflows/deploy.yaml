@@ -9,6 +9,7 @@ on:
 env:
   YC_REGISTRY: cr.yandex
   IMAGE_NAME: kdt-auth-service
+  PROJECT_NAME: kdt-auth-service
 
 jobs:
   build-and-deploy:
