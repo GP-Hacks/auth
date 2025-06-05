@@ -2,13 +2,6 @@ package models
 
 import "time"
 
-type UserStatus string
-
-const (
-	DefaultUser UserStatus = "default"
-	AdminUser   UserStatus = "admin"
-)
-
 type User struct {
 	ID          int64
 	Email       string
@@ -16,5 +9,4 @@ type User struct {
 	LastName    string
 	Surname     string
 	DateOfBirth time.Time
-	Status      UserStatus
 }
