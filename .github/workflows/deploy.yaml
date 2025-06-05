@@ -78,10 +78,6 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-      - name: ssh debug
-        run:
-          echo ${env.SSH_PRIVATE_KEY}
-
       - name: Copy deployment script
         uses: appleboy/scp-action@v0.1.7
         with:
