@@ -40,10 +40,10 @@ jobs:
           yc config set cloud-id "$YC_CLOUD_ID"
           yc config set folder-id "$YC_FOLDER_ID"
           
-          export SERVER_HOST=$(yc lockbox payload get PROJECT_NAME-server-access --format json | jq -r '.entries[] | select(.key=="SERVER_HOST") | .text_value')
-          export SSH_USERNAME=$(yc lockbox payload get PROJECT_NAME-server-access --format json | jq -r '.entries[] | select(.key=="SSH_USERNAME") | .text_value')
-          export SSH_PASSPHRASE=$(yc lockbox payload get PROJECT_NAME-server-access --format json | jq -r '.entries[] | select(.key=="SSH_PASSPHRASE") | .text_value')
-          export YC_REGISTRY_ID=$(yc lockbox payload get PROJECT_NAME-server-access --format json | jq -r '.entries[] | select(.key=="YC_REGISTRY_ID") | .text_value')
+          export SERVER_HOST=$(yc lockbox payload get ${PROJECT_NAME}-server-access --format json | jq -r '.entries[] | select(.key=="SERVER_HOST") | .text_value')
+          export SSH_USERNAME=$(yc lockbox payload get ${PROJECT_NAME}-server-access --format json | jq -r '.entries[] | select(.key=="SSH_USERNAME") | .text_value')
+          export SSH_PASSPHRASE=$(yc lockbox payload get ${PROJECT_NAME}-server-access --format json | jq -r '.entries[] | select(.key=="SSH_PASSPHRASE") | .text_value')
+          export YC_REGISTRY_ID=$(yc lockbox payload get ${PROJECT_NAME}-server-access --format json | jq -r '.entries[] | select(.key=="YC_REGISTRY_ID") | .text_value')
           
           echo "SERVER_HOST=$SERVER_HOST" >> $GITHUB_ENV
           echo "SSH_USERNAME=$SSH_USERNAME" >> $GITHUB_ENV
