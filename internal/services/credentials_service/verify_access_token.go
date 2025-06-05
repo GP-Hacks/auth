@@ -7,7 +7,7 @@ import (
 )
 
 func (s *CredentialsService) VerifyAccessToken(ctx context.Context, token string) (int64, error) {
-	id, _, err := s.verify_token(ctx, token, models.Access)
+	id, _, err := s.verifyToken(ctx, token, models.Access)
 	if err != nil {
 		return -1, err
 	}
