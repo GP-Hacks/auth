@@ -23,7 +23,7 @@ jobs:
         run: |
           echo "ENVIRONMENT=prod" >> $GITHUB_ENV
           echo "IMAGE_TAG=main-latest" >> $GITHUB_ENV
-          echo "CONTAINER_NAME=kdt-auth-service" >> $GITHUB_ENV
+          echo "CONTAINER_NAME=auth-service" >> $GITHUB_ENV
           echo "PORT=3000" >> $GITHUB_ENV
 
       - name: Install Yandex Cloud CLI

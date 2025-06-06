@@ -1,10 +1,9 @@
 #!/bin/bash
-# scripts/deploy.sh
-
+# scripts/deploy.sh - Simple app-only deployment
 set -e
 
 ENVIRONMENT="$1"
-IMAGE="$2"
+IMAGE="$2" 
 CONTAINER_NAME="$3"
 PORT="$4"
 YC_OAUTH_TOKEN="$5"
@@ -18,61 +17,30 @@ if [[ -z "$ENVIRONMENT" || -z "$IMAGE" || -z "$CONTAINER_NAME" || -z "$PORT" || 
 fi
 
 DEPLOY_PATH="/opt/apps/$ENVIRONMENT"
-COMPOSE_FILE="docker-compose.$ENVIRONMENT.yml"
-NETWORK_NAME="${PROJECT_NAME}-network-$ENVIRONMENT"
+ENV_FILE="$DEPLOY_PATH/.env"
 
-echo "🚀 Starting deployment..."
+echo "🚀 Starting app deployment..."
 echo "Environment: $ENVIRONMENT"
 echo "Image: $IMAGE"
 echo "Container: $CONTAINER_NAME"
 echo "Port: $PORT"
 
-echo "📁 Creating deployment directory..."
-sudo mkdir -p "$DEPLOY_PATH"
-cd "$DEPLOY_PATH"
-
+# Install Yandex CLI if not present
 if ! command -v yc &> /dev/null; then
     echo "📥 Installing Yandex Cloud CLI..."
     curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
     export PATH="$HOME/yandex-cloud/bin:$PATH"
 fi
 
-echo "🔑 Getting secrets from Lockbox..."
+echo "🔑 Configuring Yandex Cloud CLI..."
 yc config set token "$YC_OAUTH_TOKEN"
 yc config set cloud-id b1grt0fvgql5big8hevj
 yc config set folder-id b1gq39fmv588jocgh7to
 
-echo "📝 Creating .env file..."
+echo "📝 Getting latest environment variables..."
+sudo mkdir -p "$DEPLOY_PATH"
 yc lockbox payload get "${PROJECT_NAME}-secrets-$ENVIRONMENT" --format json | \
-    jq -r '.entries[] | "\(.key)=\(.text_value)"' | sudo tee .env > /dev/null
-
-echo "🔗 Ensuring network exists..."
-sudo docker network create "$NETWORK_NAME" 2>/dev/null || echo "Network exists"
-
-echo "🐳 Creating docker compose file..."
-cat << EOF | sudo tee "$COMPOSE_FILE" > /dev/null
-services:
-  app:
-    image: $IMAGE
-    container_name: $CONTAINER_NAME
-    ports:
-      - "$PORT:3000"
-    env_file:
-      - .env
-    networks:
-      - $NETWORK_NAME
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-networks:
-  $NETWORK_NAME:
-    external: true
-EOF
+    jq -r '.entries[] | "\(.key)=\(.text_value)"' | sudo tee "$ENV_FILE" > /dev/null
 
 echo "🔑 Authenticating with Yandex Container Registry..."
 echo "$YC_OAUTH_TOKEN" | sudo docker login \
@@ -83,27 +51,66 @@ echo "$YC_OAUTH_TOKEN" | sudo docker login \
 echo "📦 Pulling latest image..."
 sudo docker pull "$IMAGE"
 
-echo "🛑 Stopping old containers..."
-sudo docker stop "$CONTAINER_NAME" 2>/dev/null || true
-sudo docker rm "$CONTAINER_NAME" 2>/dev/null || true
+echo "🛑 Stopping old application container..."
+sudo docker stop "$CONTAINER_NAME" 2>/dev/null || echo "Container was not running"
+sudo docker rm "$CONTAINER_NAME" 2>/dev/null || echo "Container was not found"
 
-echo "▶️  Starting new container..."
-sudo docker compose -f "$COMPOSE_FILE" up -d
+echo "🔗 Finding existing network..."
+NETWORK_NAME=$(sudo docker network ls --format "{{.Name}}" | grep "${PROJECT_NAME}-network" | head -1)
+if [ -z "$NETWORK_NAME" ]; then
+    echo "⚠️  No existing network found, creating new one..."
+    NETWORK_NAME="${PROJECT_NAME}-network-$ENVIRONMENT"
+    sudo docker network create "$NETWORK_NAME"
+else
+    echo "📡 Using existing network: $NETWORK_NAME"
+fi
 
-echo "🏥 Waiting for health check..."
-for i in {1..10}; do
-    if curl -f "http://localhost:$PORT/health" 2>/dev/null; then
-        echo "✅ Application ready!"
-        break
-    fi
+echo "▶️  Starting new application container..."
+sudo docker run -d \
+  --name "$CONTAINER_NAME" \
+  --network "$NETWORK_NAME" \
+  --env-file "$ENV_FILE" \
+  --port "$PORT:8080" \
+  --restart unless-stopped \
+  --health-cmd="curl -f http://localhost:8080/health || exit 1" \
+  --health-interval=30s \
+  --health-timeout=10s \
+  --health-retries=3 \
+  --health-start-period=40s \
+  "$IMAGE"
+
+echo "🏥 Waiting for application to be healthy..."
+for i in {1..20}; do
+    HEALTH_STATUS=$(sudo docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "starting")
     
-    if [ $i -eq 10 ]; then
-        echo "❌ Health check failed"
+    if [ "$HEALTH_STATUS" = "healthy" ]; then
+        echo "✅ Application is healthy!"
+        break
+    elif [ "$HEALTH_STATUS" = "unhealthy" ]; then
+        echo "❌ Application health check failed!"
+        echo "📋 Container logs:"
+        sudo docker logs "$CONTAINER_NAME" --tail=20
         exit 1
     fi
     
-    sleep 30
+    if [ $i -eq 20 ]; then
+        echo "❌ Health check timeout"
+        echo "📋 Container logs:"
+        sudo docker logs "$CONTAINER_NAME" --tail=20
+        exit 1
+    fi
+    
+    echo "Health status: $HEALTH_STATUS, waiting... ($i/20)"
+    sleep 15
 done
 
+echo "🧹 Cleaning up old images..."
+sudo docker image prune -f --filter "label=org.opencontainers.image.title=$PROJECT_NAME" || true
+
 echo "✅ Deployment completed successfully!"
+echo "📊 Container status:"
+sudo docker ps --filter "name=$CONTAINER_NAME" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
 echo "🎉 Application is ready at http://localhost:$PORT"
+echo "📋 To view logs: sudo docker logs -f $CONTAINER_NAME"
+echo "🔍 To check health: curl http://localhost:$PORT/health"
