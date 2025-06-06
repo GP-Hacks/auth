@@ -93,8 +93,7 @@ sudo docker run -d \
   --env-file "$ENV_FILE" \
   -p "$PORT:8080" \
   --restart unless-stopped \
-  "$IMAGE" \
-  sh -c "goose -dir /root/db/migrations postgres \"postgresql://\$APP_POSTGRES_USER:\$APP_POSTGRES_PASSWORD@\$APP_POSTGRES_ADDRESS/\$APP_POSTGRES_NAME?sslmode=disable\" up"
+  "$IMAGE"
 
 echo "🏥 Waiting for application to be healthy..."
 sleep 10  # Give the container time to start
