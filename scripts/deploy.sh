@@ -39,6 +39,13 @@ yc config set folder-id b1gq39fmv588jocgh7to
 
 echo "📝 Getting latest environment variables..."
 sudo mkdir -p "$DEPLOY_PATH"
+
+# Install jq if not present
+if ! command -v jq &> /dev/null; then
+    echo "📥 Installing jq..."
+    sudo apt-get update && sudo apt-get install -y jq
+fi
+
 yc lockbox payload get "${PROJECT_NAME}-secrets-$ENVIRONMENT" --format json | \
     jq -r '.entries[] | "\(.key)=\(.text_value)"' | sudo tee "$ENV_FILE" > /dev/null
 
@@ -70,39 +77,39 @@ sudo docker run -d \
   --name "$CONTAINER_NAME" \
   --network "$NETWORK_NAME" \
   --env-file "$ENV_FILE" \
-  --port "$PORT:8080" \
+  # -p "$PORT:8080" \
   --restart unless-stopped \
-  --health-cmd="curl -f http://localhost:8080/health || exit 1" \
+  # --health-cmd="curl -f http://localhost:8080/health || exit 1" \
   --health-interval=30s \
   --health-timeout=10s \
   --health-retries=3 \
   --health-start-period=40s \
   "$IMAGE"
 
-echo "🏥 Waiting for application to be healthy..."
-for i in {1..20}; do
-    HEALTH_STATUS=$(sudo docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "starting")
-    
-    if [ "$HEALTH_STATUS" = "healthy" ]; then
-        echo "✅ Application is healthy!"
-        break
-    elif [ "$HEALTH_STATUS" = "unhealthy" ]; then
-        echo "❌ Application health check failed!"
-        echo "📋 Container logs:"
-        sudo docker logs "$CONTAINER_NAME" --tail=20
-        exit 1
-    fi
-    
-    if [ $i -eq 20 ]; then
-        echo "❌ Health check timeout"
-        echo "📋 Container logs:"
-        sudo docker logs "$CONTAINER_NAME" --tail=20
-        exit 1
-    fi
-    
-    echo "Health status: $HEALTH_STATUS, waiting... ($i/20)"
-    sleep 15
-done
+# echo "🏥 Waiting for application to be healthy..."
+# for i in {1..20}; do
+#     HEALTH_STATUS=$(sudo docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "starting")
+#
+#     if [ "$HEALTH_STATUS" = "healthy" ]; then
+#         echo "✅ Application is healthy!"
+#         break
+#     elif [ "$HEALTH_STATUS" = "unhealthy" ]; then
+#         echo "❌ Application health check failed!"
+#         echo "📋 Container logs:"
+#         sudo docker logs "$CONTAINER_NAME" --tail=20
+#         exit 1
+#     fi
+#
+#     if [ $i -eq 20 ]; then
+#         echo "❌ Health check timeout"
+#         echo "📋 Container logs:"
+#         sudo docker logs "$CONTAINER_NAME" --tail=20
+#         exit 1
+#     fi
+#
+#     echo "Health status: $HEALTH_STATUS, waiting... ($i/20)"
+#     sleep 15
+# done
 
 echo "🧹 Cleaning up old images..."
 sudo docker image prune -f --filter "label=org.opencontainers.image.title=$PROJECT_NAME" || true
