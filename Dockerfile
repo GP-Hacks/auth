@@ -22,4 +22,15 @@ COPY --from=builder /app/db/migrations /root/db/migrations
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "goose -dir /root/db/migrations postgres \"postgresql://$APP_POSTGRES_USER:$APP_POSTGRES_PASSWORD@$APP_POSTGRES_ADDRESS/$APP_POSTGRES_NAME?sslmode=disable\" up && exec ./auth_service"]
+COPY <<EOF /entrypoint.sh
+#!/bin/sh
+set -e
+
+echo "=== Run Migrations ==="
+goose -dir /root/db/migrations postgres "postgresql://\$APP_POSTGRES_USER:\$APP_POSTGRES_PASSWORD@\$APP_POSTGRES_ADDRESS/\$APP_POSTGRES_NAME?sslmode=disable" up
+
+echo "=== Starting Application ==="
+exec ./auth_service
+EOF
+
+RUN chmod +x /entrypoint.sh
