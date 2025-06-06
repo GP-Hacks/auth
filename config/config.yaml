@@ -15,9 +15,9 @@ redis:
 postgres:
   user: ${APP_POSTGRES_USER}
   name: ${APP_POSTGRES_NAME}
-  password: {$APP_POSTGRES_PASSWORD}
-  address: {$APP_POSTGRES_ADDRESS}
+  password: ${APP_POSTGRES_PASSWORD}
+  address: ${APP_POSTGRES_ADDRESS}
 
 logging:
-  isProduction: {$APP_LOGGING_IS_PRODUCTION}
+  isProduction: ${APP_LOGGING_IS_PRODUCTION}
   vectorURL: "http://vector:9880"
