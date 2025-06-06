@@ -30,6 +30,13 @@ if ! command -v yc &> /dev/null; then
     echo "📥 Installing Yandex Cloud CLI..."
     curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
     export PATH="$HOME/yandex-cloud/bin:$PATH"
+    # Source the path immediately
+    source "$HOME/.bashrc" 2>/dev/null || true
+fi
+
+# Make sure yc is available
+if ! command -v yc &> /dev/null; then
+    export PATH="$HOME/yandex-cloud/bin:$PATH"
 fi
 
 echo "🔑 Configuring Yandex Cloud CLI..."
@@ -43,10 +50,15 @@ sudo mkdir -p "$DEPLOY_PATH"
 # Install jq if not present
 if ! command -v jq &> /dev/null; then
     echo "📥 Installing jq..."
-    sudo apt-get update && sudo apt-get install -y jq
+    sudo apt-get update >/dev/null 2>&1
+    sudo apt-get install -y jq >/dev/null 2>&1
 fi
 
-yc lockbox payload get "${PROJECT_NAME}-secrets-$ENVIRONMENT" --format json | \
+# Get secrets and create .env file
+SECRET_NAME="${PROJECT_NAME}-secrets-$ENVIRONMENT"
+echo "📋 Getting secrets from: $SECRET_NAME"
+
+yc lockbox payload get "$SECRET_NAME" --format json | \
     jq -r '.entries[] | "\(.key)=\(.text_value)"' | sudo tee "$ENV_FILE" > /dev/null
 
 echo "🔑 Authenticating with Yandex Container Registry..."
@@ -55,7 +67,7 @@ echo "$YC_OAUTH_TOKEN" | sudo docker login \
   --password-stdin \
   cr.yandex
 
-echo "📦 Pulling latest image..."
+echo "📦 Pulling latest image: $IMAGE"
 sudo docker pull "$IMAGE"
 
 echo "🛑 Stopping old application container..."
@@ -73,46 +85,49 @@ else
 fi
 
 echo "▶️  Starting new application container..."
+echo "Command: docker run -d --name $CONTAINER_NAME --network $NETWORK_NAME --env-file $ENV_FILE -p $PORT:8080 --restart unless-stopped $IMAGE"
+
 sudo docker run -d \
   --name "$CONTAINER_NAME" \
   --network "$NETWORK_NAME" \
   --env-file "$ENV_FILE" \
-  # -p "$PORT:8080" \
+  -p "$PORT:8080" \
   --restart unless-stopped \
-  # --health-cmd="curl -f http://localhost:8080/health || exit 1" \
-  --health-interval=30s \
-  --health-timeout=10s \
-  --health-retries=3 \
-  --health-start-period=40s \
   "$IMAGE"
 
-# echo "🏥 Waiting for application to be healthy..."
+echo "🏥 Waiting for application to be healthy..."
+sleep 10  # Give the container time to start
+
 # for i in {1..20}; do
-#     HEALTH_STATUS=$(sudo docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "starting")
-#
-#     if [ "$HEALTH_STATUS" = "healthy" ]; then
-#         echo "✅ Application is healthy!"
-#         break
-#     elif [ "$HEALTH_STATUS" = "unhealthy" ]; then
-#         echo "❌ Application health check failed!"
+#     # Check if container is running
+#     if ! sudo docker ps -q --filter "name=$CONTAINER_NAME" | grep -q .; then
+#         echo "❌ Container is not running!"
 #         echo "📋 Container logs:"
 #         sudo docker logs "$CONTAINER_NAME" --tail=20
 #         exit 1
+#     fi
+#
+#     # Check health endpoint
+#     if curl -f -s "http://localhost:$PORT/health" >/dev/null 2>&1; then
+#         echo "✅ Application is healthy!"
+#         break
 #     fi
 #
 #     if [ $i -eq 20 ]; then
 #         echo "❌ Health check timeout"
 #         echo "📋 Container logs:"
 #         sudo docker logs "$CONTAINER_NAME" --tail=20
+#         echo "📊 Container status:"
+#         sudo docker ps --filter "name=$CONTAINER_NAME"
 #         exit 1
 #     fi
 #
-#     echo "Health status: $HEALTH_STATUS, waiting... ($i/20)"
+#     echo "Waiting for health check... ($i/20)"
 #     sleep 15
 # done
 
 echo "🧹 Cleaning up old images..."
-sudo docker image prune -f --filter "label=org.opencontainers.image.title=$PROJECT_NAME" || true
+sudo docker image prune -f || true
 
 echo "✅ Deployment completed successfully!"
 echo "📊 Container status:"
