@@ -34,7 +34,7 @@ const htmlTemplate = `
 
 func (s *CredentialsService) sendConfirmationEmail(u *models.User) {
 	token := uuid.New()
-	confirmationURL := "http://localhost:8000/confirm?token=" + token.String()
+	confirmationURL := "https://tatarstan-card.ru/api/auth/confirm/" + token.String()
 
 	tmpl, err := template.New("email").Parse(htmlTemplate)
 	if err != nil {
