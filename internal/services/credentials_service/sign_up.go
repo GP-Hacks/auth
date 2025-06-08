@@ -37,6 +37,7 @@ func (s *CredentialsService) SignUp(ctx context.Context, email, password string,
 		}
 
 		u.ID = id
+		cred.ID = id
 		if err := s.userAdaper.Create(ctx, u); err != nil {
 			if errors.Is(err, errs.AlreadyExistsError) {
 				return fmt.Errorf("create user: %w", err)
@@ -44,7 +45,7 @@ func (s *CredentialsService) SignUp(ctx context.Context, email, password string,
 			return fmt.Errorf("create user: %w: %v", errs.SomeError, err)
 		}
 
-		go s.sendConfirmationEmail(u)
+		go s.sendConfirmationEmail(&cred)
 
 		return nil
 	})

@@ -81,3 +81,8 @@ func (c *AuthController) RefreshTokens(ctx context.Context, req *auth.RefreshTok
 func (c *AuthController) Logout(ctx context.Context, req *auth.LogoutRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, c.credentialsService.Logout(ctx, req.Tokens.Access, req.Tokens.Refresh)
 }
+
+func (c *AuthController) ResendConfirmationMail(ctx context.Context, req *auth.ResendConfirmationMailRequest) (*emptypb.Empty, error) {
+	c.credentialsService.ResendConfirmationEmail(ctx, req.Email)
+	return &emptypb.Empty{}, nil
+}

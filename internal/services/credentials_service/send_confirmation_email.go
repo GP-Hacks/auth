@@ -32,7 +32,7 @@ const htmlTemplate = `
 </html>
 `
 
-func (s *CredentialsService) sendConfirmationEmail(u *models.User) {
+func (s *CredentialsService) sendConfirmationEmail(credentials *models.Credentials) {
 	token := uuid.New()
 	confirmationURL := "https://tatarstan-card.ru/api/auth/confirm/" + token.String()
 
@@ -49,12 +49,12 @@ func (s *CredentialsService) sendConfirmationEmail(u *models.User) {
 		log.Error().Msg(err.Error())
 	}
 
-	if err := s.emailTokensRepository.Save(context.Background(), token.String(), u.ID); err != nil {
+	if err := s.emailTokensRepository.Save(context.Background(), token.String(), credentials.ID); err != nil {
 		log.Error().Msg(err.Error())
 	}
 
 	m := models.Mail{
-		To:     u.Email,
+		To:     credentials.Email,
 		Header: "Подтверждение почты",
 		Body:   body.String(),
 	}
